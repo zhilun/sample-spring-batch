@@ -12,7 +12,7 @@ public class MockOrderProcessService {
     @PostMapping("/process")
     public Map<String, String> mockService() {
         HashMap<String, String> map = new HashMap<>();
-        map.put("Status", "true");
+        map.put("status", "true");
         return map;
     }
 }

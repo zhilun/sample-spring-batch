@@ -13,9 +13,14 @@ import org.springframework.batch.item.data.RepositoryItemWriter;
 import org.springframework.batch.item.file.builder.FlatFileItemReaderBuilder;
 import org.springframework.batch.item.file.mapping.BeanWrapperFieldSetMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
 
 @Configuration
 @EnableBatchProcessing
@@ -29,6 +34,9 @@ public class BatchConfiguration {
 
 	@Autowired
 	private OrderRepository orderRepository;
+
+	@Autowired
+	private Environment environment;
 	
 	@Bean
 	public ItemReader<Order> reader() {
@@ -49,7 +57,20 @@ public class BatchConfiguration {
 
 			@Override
 			public Order process(final Order order) throws Exception {
-				return order;
+				RestTemplate restTemplate = new RestTemplate();
+				String processEndpoint = environment.getProperty("process.endpoint");
+				System.out.println(processEndpoint);
+				ProcessStatus processStatus = restTemplate.postForObject(processEndpoint,null,ProcessStatus.class);
+				System.out.println("Calling process API");
+				System.out.println("Status is: " + processStatus.getStatus());
+				if (processStatus.getStatus() == "true") {
+					System.out.println("Successfully processed");
+					return order;
+				} else {
+					System.out.println("Failed to process!");
+					return null;
+				}
+
 			}
 		};
 	}
